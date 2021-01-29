@@ -47,7 +47,7 @@ int astServerCtrl::GetDevInfo()
         m_stDevInfo.stSystemInfo.strLastUpTime = clsSystemInfo.lastUpTime.toStdString();
         m_stDevInfo.stSystemInfo.strOsLanguage = clsSystemInfo.osLanguage.toStdString();
         m_stDevInfo.stSystemInfo.strInstallTime = clsSystemInfo.osInstallTime.toStdString();
-        m_stDevInfo.stSystemInfo.strArchitecture = clsSystemInfo.getPlatform().toStdString();
+        m_stDevInfo.stSystemInfo.strArchitecture = clsSystemInfo.getOsArchitecture().toStdString();
         //cpu信息
         CpuInfo clsCpuInfo;
         m_stDevInfo.stCpuInfo.strCpuFamily = clsCpuInfo.getCpuFamily().toStdString();
@@ -140,15 +140,11 @@ int astServerCtrl::RegAst()     //注册服务器
     int ret = 0;
     Json::Value root;
     Json::FastWriter iWriter;
-    char localip[16] = {0x00};
-    char localmac[32] = {0x00};
-    char cIpMask[16] = { 0x00 };
 
-    char os[128] = {0x00};
     char cCmdBuf[4096] = {0x00};
     char *pCmd = cCmdBuf;
     unsigned char cbuf[1024];
-    char cErrorLog[1024] = {0x00};
+
     int nLen = 1024;
     char obuf[4096]; //socket接收空间
     int  olen = 4096;
@@ -161,10 +157,10 @@ int astServerCtrl::RegAst()     //注册服务器
     int nJson = 4096;
     unsigned char ver;
     unsigned char type;
-    unsigned char cOSID[4];
-    unsigned char cOAID[16];
-    unsigned char cMAC[32];
-    char cRegCK[64];
+    unsigned char cOSID[4]={0x00};
+    unsigned char cOAID[16]={0x00};
+    unsigned char cMAC[32]={0x00};
+    char cRegCK[64]={0x00};
     QString qsLog;
     TryConnect();
     GetDevInfo();
@@ -173,6 +169,7 @@ int astServerCtrl::RegAst()     //注册服务器
     root["ip"] = m_stDevInfo.ipmac.cIp;
     root["port"] = "10086";
     root["os"] = m_stDevInfo.stSystemInfo.strOsName;
+
     root["osType"] = "linux";
     root["architecture"] = m_stDevInfo.stSystemInfo.strArchitecture;
 
@@ -181,7 +178,7 @@ int astServerCtrl::RegAst()     //注册服务器
 
     memcpy(cCmdBuf,iWriter.write(root).c_str(), iWriter.write(root).length());
     //测试
-    //sprintf_s(cCmdBuf, "{\"cid\":\"1\",\"ip\":\"21.43.65.44\",\"mac\":\"C4:34:6B:4F:7E:BA\",\"os\":\"Microsoft Windows 7 企业版 \",\"port\":\"10086\"}");
+    //sprintf(cCmdBuf, "{\"cid\":\"1\",\"ip\":\"192.168.6.44\",\"mac\":\"C4:34:6B:4F:7E:BA\",\"os\":\"Microsoft Windows 7 企业版 \",\"port\":\"10086\"}");
     try {
         ret = m_clsAstPackage.PutData(pCmd, 0x1, 0x1, 0x2, cSID, cAID, 0, cbuf, nLen);
         if(ret!=0)
@@ -208,10 +205,8 @@ int astServerCtrl::RegAst()     //注册服务器
         ret = m_clsAstClient.run((char *)cbuf, nLen, obuf, olen, nSendLen);
         if (ret < 0) //socket错误
         {
-            //printf("regcheck failed! server_ret=[%d]", ret);
             qsLog = QString("regcheck failed! server_ret=[%1] expsend[%2] realsend[%3] recv[%4]").arg(ret).arg(nLen).arg(nSendLen).arg(olen);
             cout<<qsLog.toStdString().c_str()<<endl;
-            //m_Log.hexwrite(cbuf, nLen, 4);
             nReturn = 3;
             throw nReturn;
         }
@@ -247,15 +242,12 @@ int astServerCtrl::RegAst()     //注册服务器
 
         memcpy(cCmdBuf,iWriter.write(root).c_str(), iWriter.write(root).length());
 
-
         nLen = 1024;
-
-        //m_Log.hexwrite(cAID, m_clsAstPackage.GetAidLen(), 0);
 
         ret = m_clsAstPackage.PutData(pCmd, 0x1, 0x1, 0x3, cSID, cAID, 1, cbuf, nLen);
 
         cout<<pCmd<<endl;
-        if (ret != 4)
+        if (ret != 0)
         {
             nReturn = 4;
             throw nReturn;
@@ -331,7 +323,73 @@ int astServerCtrl::RetryRegAst() //重新注册
 }
 int astServerCtrl::RegFinish(char *regmsg, int regmsglen)  //注册应答处理
 {
+    int nReturn = 0;
+    int ret = 0;
+    unsigned char ver;
+    unsigned char type;
+    unsigned char cSID[4];
+    unsigned char cAID[16];
+    char *pJson = NULL;
+    unsigned char cSIDDefault[4] = { 0 };
+    Json::Reader reader;
+    Json::Value  root;
+    Json::Value cid;
+    char cAid[128];
+    char cKA[128];
+    char cMKA[128];
+    int nJson = m_clsAstPackage.GetMsgLen(regmsg, regmsglen);
+    if (nJson <= 0)
+        return 1;
+    nJson++;
+    pJson = (char *)malloc(sizeof(char)*nJson);
+    if (pJson == NULL)
+        return 2;
+    memset(pJson, 0x00, sizeof(char)*nJson);
+    try {
+        ret = m_clsAstPackage.GetData((unsigned char *)regmsg, regmsglen, 0, ver, type, cSID, cAID, pJson, nJson);
+        if (ret != 0) //解析报文数据错误
+        {
+            nReturn = 3;
+            throw nReturn;
+        }
+        if (memcmp(cSID, cSIDDefault, 4) != 0)
+        {
+            nReturn = 4;  //SID不为全零
+            throw nReturn;
+        }
+        qDebug(pJson);
 
+        reader.parse(pJson, pJson + nJson, root, false);
+        cid = root["cid"];
+        if (cid.asString().compare("1") != 0)
+        {
+            nReturn = 5;  //cid 错误
+            throw nReturn;
+        }
+        cid = root["aid"];  //printf("aid=%s\n", cid.asString().c_str());
+        memcpy(cAid, cid.asString().c_str(), cid.asString().length());
+        qDebug("Receive reg ass aid:");
+        qDebug(cAid);
+        cid = root["ka"];   //printf("ka=%s\n", cid.asString().c_str());
+
+        memcpy(cKA, cid.asString().c_str(), cid.asString().length());
+        qDebug("Receive reg ass cKA:");
+        qDebug(cKA);
+        cid = root["mka"];  //printf("mka=%s\n", cid.asString().c_str());
+        memcpy(cMKA, cid.asString().c_str(), cid.asString().length());
+        qDebug("Receive reg ass cMKA:");
+        qDebug(cMKA);
+        ret = m_clsAstPackage.InitReg(cAid, cKA, cMKA, (const char *)cSID, 4);  //注册完成，保存密钥信息
+        if (ret != 0)
+            nReturn = 6 + ret;
+    } catch (int nerr) {
+
+    }
+
+EXIT_RegFinish:
+    if (pJson != NULL)
+        free(pJson);
+    return nReturn;
 }
 int astServerCtrl::RegAck(char *regmsg, int regmsglen)     //完成应答处理
 {

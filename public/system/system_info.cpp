@@ -62,6 +62,8 @@ SystemInfo::SystemInfo()
     getOsVersion();
     //系统语言
     getOsLanguage();
+    //系统安装时间
+    getOsInstallTime();
 }
 
 QString SystemInfo::getUsername() const
@@ -239,4 +241,9 @@ QString SystemInfo::getOsInstallTime()
         }
     }
     return qsRes;
+}
+
+QString SystemInfo::getOsArchitecture()
+{
+    return QSysInfo::currentCpuArchitecture();
 }

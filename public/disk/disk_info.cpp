@@ -139,7 +139,7 @@ void DiskInfo::getDiskInfo()
                         stDiskInfo->qsFileSystemType = getFileTypeByDiskName(qsDiskName);
                         stDiskInfo->qsCaption = resList.at(3).split("=").last();
                         stDiskInfo->qsSerialNo = resList.at(4).split("=").last();
-                        stDiskInfo->qlSize = resList.at(5).split("=").last().split("G").first().toDouble();
+                        stDiskInfo->qlSize = resList.at(5).split("=").last().split("G").first().toDouble()*1024*1024;
                         stDiskInfo->qsManufauturer = resList.at(6).split("=").last();
                         stDiskInfo->qsHotPlug = resList.at(7).split("=").last();
 

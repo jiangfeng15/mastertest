@@ -276,7 +276,7 @@ quint64 CpuInfo::getCpuCache() const
                 if(!qsCache.isEmpty())
                 {
                     qsCache = qsCache.split("K").first();
-                    qlRes = qsCache.toULongLong();
+                    qlRes = qsCache.toULongLong()*1024;
                 }
 
             }

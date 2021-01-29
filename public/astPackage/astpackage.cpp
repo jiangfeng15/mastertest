@@ -427,20 +427,7 @@ int  astPackage::InitReg(char *aid, char *ka, char *mka, const char *id, int idl
     memset(m_AgentID, 0 , 16);
     AToByte(aid, m_AgentID, strlen(aid)/2);
     memcpy(m_KA, out, LENGTH_KA);
-#if 0
-printf("KA:\n");
-for(int i = 0; i < LENGTH_KA; i++)
-{
-    printf("%02X", m_KA[i]);
-}
-printf("\n");
-printf("AID:\n");
-for(int i = 0; i < 16; i++)
-{
-    printf("%02X", (unsigned char)m_AgentID[i]);
-}
-printf("\n");
-#endif
+
     m_bInit = false;
     return 0;
 }

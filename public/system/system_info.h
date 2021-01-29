@@ -37,6 +37,7 @@ public:
     QString getOsVersion();
     QString getOsLanguage();
     QString getOsInstallTime();
+    QString getOsArchitecture();
 
 private slots:
 public:
