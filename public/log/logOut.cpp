@@ -104,7 +104,7 @@ int CAstLogOut::WriteLog(char *cLog, int nLevel)
             pWord++;
         }
     }
-    nLenWrite = fprintf(m_fp, "%4d-%02d-%02d %02d:%02d:%02d.%03d\t[%s]\t%s\n", 1900+pCurTime->tm_year,pCurTime->tm_mon,pCurTime->tm_mday,pCurTime->tm_hour,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec,
+    nLenWrite = fprintf(m_fp, "%4d-%02d-%02d %02d:%02d:%02d.%03d\t[%s]\t%s\n", 1900+pCurTime->tm_year,pCurTime->tm_mon+1,pCurTime->tm_mday,pCurTime->tm_hour,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec,
         ASS_LOG_LEVEL[nLevel], cLogBuf);
     fflush(m_fp);
 
@@ -120,7 +120,7 @@ int CAstLogOut::WriteLog(char *cLog, int nLevel)
         fclose(m_fp);
         char newname[280];
         sprintf(newname, "%s_%4d%02d%02d%02d%02d%02d%03d.log", m_cFileBase,
-            1900+pCurTime->tm_year,pCurTime->tm_mon,pCurTime->tm_mday,pCurTime->tm_hour,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec);
+            1900+pCurTime->tm_year,pCurTime->tm_mon+1,pCurTime->tm_mday,pCurTime->tm_hour,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec);
         rename(m_cFileName, newname);
         m_fp = fopen(m_cFileName, "at");
         if(m_fp == NULL)
@@ -156,7 +156,7 @@ int CAstLogOut::WriteHexLog(unsigned char * cLog, int nLen, int nLevel)
     struct tm *pCurTime;
     pCurTime = localtime(&curTimeval.tv_sec);
 
-    fprintf(m_fp, "%4d-%02d-%02d %02d:%02d:%02d.%03d\t[%s]\t", 1900+pCurTime->tm_year,pCurTime->tm_mon,pCurTime->tm_mday,pCurTime->tm_hour,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec,
+    fprintf(m_fp, "%4d-%02d-%02d %02d:%02d:%02d.%03d\t[%s]\t", 1900+pCurTime->tm_year,pCurTime->tm_mon+1,pCurTime->tm_mday,pCurTime->tm_hour,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec,
         ASS_LOG_LEVEL[nLevel]);
     for(int i=0; i<nLen; i++)
         fprintf(m_fp, "%02X", cLog[i]);
@@ -171,7 +171,7 @@ int CAstLogOut::WriteHexLog(unsigned char * cLog, int nLen, int nLevel)
         fclose(m_fp);
         char newname[280];
         sprintf(newname, "%s_%4d%02d%02d%02d%02d%02d%03d.log", m_cFileBase,
-            1900+pCurTime->tm_year,pCurTime->tm_mon,pCurTime->tm_mday,pCurTime->tm_hour,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec);
+            1900+pCurTime->tm_year,pCurTime->tm_mon,pCurTime->tm_mday,pCurTime->tm_hour+1,pCurTime->tm_min,pCurTime->tm_sec,curTimeval.tv_usec);
         rename(m_cFileName, newname);
         m_fp = fopen(m_cFileName, "at");
         if(m_fp == NULL)
