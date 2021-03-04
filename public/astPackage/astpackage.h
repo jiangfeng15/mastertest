@@ -2,8 +2,8 @@
 #define ASTPACKAGE_H
 #include <stdlib.h>
 #include <string.h>
-#include "public/sm3.h"
-#include "public/sm4.h"
+#include "public/sm/sm3.h"
+#include "public/sm/sm4.h"
 #include "public/astconfig.h"
 
 #define  LENGTH_KI   32

@@ -122,7 +122,7 @@ int CAstClient::clean_socket()
     return 0;
 }
 
-#include "sm4.h"
+#include "sm/sm4.h"
 int CAstClient::run(const char* sbuf,int slen,char* obuf,int& olen, int &sRealLen)
 {
     int ret;
